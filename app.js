@@ -40,12 +40,16 @@ lift.on('up', (passenger)=>{
 
   setTimeout(()=>{
       // Add your own code after here.
+      console.log('my current fl', lift.currentFloor, lift.passenger)
+      if(lift.currentFloor !== lift.passenger.destination){        
+        lift.currentFloor++;
+        lift.emit('up');
+      }else{
+        lift.emit('down');
+      }
+      
 
-      console.log("I'm going up, wankers!");
 
-      // you probably shouldn't keep the following in your version.
-      // just here for demonstration purposes.
-      lift.emit('down');
   }, 1000)
 
 });
@@ -59,8 +63,16 @@ lift.on('down', ()=>{
 
   setTimeout(()=>{
     // Add your own code after here.
-
-    console.log("Bullocks, I'm going down...");
+    if(tenants.length > 0){
+      if(lift.currentFloor > 1){
+        lift.currentFloor--;
+        lift.emit('down');
+      }else if(lift.currentFloor === 1){
+        lift.emit('up', tenants.pop());
+      }
+    }
+    
+    console.log("Bullocks, I'm going down...to ", lift.currentFloor);
   }, 1000)
 
 })
