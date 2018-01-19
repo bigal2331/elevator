@@ -1,86 +1,82 @@
-// Require events of course
-const EventEmitter = require('events');
+var Passenger = require('./passenger.js');
 
-// Make the tenant array
-const tenants = [
-  {	name:	'Jerry',	destination:	4	},
-  {	name:	'Kramer',	destination:	10	},
-	{	name:	'Newman',	destination:	2	}
+var EventEmitter = require('events');
+
+var passengers = [
+  new Passenger('John', 3),
+  new Passenger('Sally', 4),
+  new Passenger('David', 8),
 ];
 
-// The elevator class
-class Elevator extends EventEmitter {
-  constructor(){
-    // this needs to be called so that Elevator
-    // gets all the methods and properties of
-    // EventEmitter
-    super();
-
-    // The Elevator starts at 1 with no one in it
-    this.currentFloor = 1;
-    this.passenger = {};
-
-  }
+function Elevator (currentPassenger, currentFloor) {
+  this.currentPassenger = currentPassenger || {};
+  this.currentFloor = currentFloor || 0;
 }
 
+Elevator.prototype = new EventEmitter();
 
+Elevator.prototype.loadPassenger = function(passenger){
+  console.log(`Loading passenger ${passenger.name} at floor ${this.currentFloor}`);
+  this.currentPassenger = passenger;
+  this.emit('up');
+};
 
+Elevator.prototype.unloadPassenger = function () {
+  console.log(`Unloading ${this.currentPassenger.name} at floor ${this.currentFloor}`);
+  this.currentPassenger = {};
+  this.emit('down');
+};
 
+Elevator.prototype.goUp = function () {
+  console.log(`Elevator going up, currently at floor ${this.currentFloor}`);
+  this.currentFloor ++;
+};
 
+Elevator.prototype.goDown = function () {
+  console.log(`Elevator going down, currently at floor ${this.currentFloor}`);
+  this.currentFloor --;
+};
 
+var elevator = new Elevator();
 
-// In England, elevators are called lifts :)
-const lift = new Elevator();
+// console.log(elevator);
+elevator.on('up', function(){
+  setTimeout(function() {
+  // keep going up until we reach desired floor
+  // everytime we go up a floor, check if it is desired floor
+  if(this.currentFloor === this.currentPassenger.desiredFloor){
+        // unload passenger
+      this.unloadPassenger();
+      // if not desired floor.?
+  } else {
+    // keep going up
+      this.goUp();
+      this.emit('up');
 
-lift.on('up', (passenger)=>{
-  // Defensive coding, only change the passenger if one was supplied.
-  if (passenger){
-    lift.passenger = passenger;
-  }
-
-  setTimeout(()=>{
-      // Add your own code after here.
-      console.log('my current fl', lift.currentFloor, lift.passenger)
-      if(lift.currentFloor !== lift.passenger.destination){        
-        lift.currentFloor++;
-        lift.emit('up');
-      }else{
-        lift.emit('down');
-      }
-      
-
-
-  }, 1000)
+    }
+  }.bind(this), 1000);
 
 });
 
+elevator.on('down', function(){
+  setTimeout(function() {
 
+  // go down until we reach lobby
+  if(this.currentFloor !== 0){
+    this.goDown();
+    this.emit('down');
+  } else{
+    // we are in the lobby
+    var nextPassenger = passengers.pop();
 
-
-
-
-lift.on('down', ()=>{
-
-  setTimeout(()=>{
-    // Add your own code after here.
-    if(tenants.length > 0){
-      if(lift.currentFloor > 1){
-        lift.currentFloor--;
-        lift.emit('down');
-      }else if(lift.currentFloor === 1){
-        lift.emit('up', tenants.pop());
+    if(nextPassenger){
+      this.loadPassenger(nextPassenger);
+    } else{
+      console.log(`No more passengers. We are back at floor ${this.currentFloor}`);
       }
-    }
-    
-    console.log("Bullocks, I'm going down...to ", lift.currentFloor);
-  }, 1000)
+  }
+}.bind(this), 1000);
 
-})
+});
 
-
-
-
-
-// run node app.js and take note of what happens.
-// what happens if you change it to 'down'?
-lift.emit('up', tenants.pop() );
+elevator.loadPassenger(passengers.pop());
